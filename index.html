@@ -44,7 +44,22 @@
         <label for="designMode">DESIGN MODE</label>
         <select id="designMode">
           <option value="retroBubble" selected>Retro + Bubble</option>
-          <option value="watercolorBubble">Watercolor Bubble</option>
+          <option value="watercolorBubble">Watercolor Bubbles</option>
+          <option value="watercolorBlobs">Watercolor Blobs</option>
+          <option value="watercolorFluid">Watercolor Fluid</option>
+          <option value="shapesWatercolor">Shapes Watercolor</option>
+          <option value="organicShapesWatercolor">Organic Shapes Watercolor</option>
+          <option value="circlesWatercolor">Circles Watercolor</option>
+          <option value="splashesWatercolor">Splashes Watercolor</option>
+          <option value="washesWatercolor">Washes Watercolor</option>
+          <option value="marblingWatercolor">Marbling Watercolor</option>
+          <option value="swirlsWatercolor">Swirls Watercolor</option>
+          <option value="wavesWatercolor">Waves Watercolor</option>
+          <option value="dotsWatercolor">Dots Watercolor</option>
+          <option value="confettiWatercolor">Confetti Watercolor</option>
+          <option value="galaxyWatercolor">Galaxy Watercolor</option>
+          <option value="botanicalWatercolor">Botanical Watercolor</option>
+          <option value="abstractShapes">Abstract Shapes</option>
           <option value="softBlob">Soft Blobs</option>
           <option value="mandala">Mandala</option>
           <option value="retroWave">Retro Waves</option>
@@ -63,6 +78,15 @@
       <section class="control-block range-control">
         <div class="label-row"><label for="frequency">WAVE FREQUENCY</label><output id="frequencyVal">28%</output></div>
         <input id="frequency" type="range" min="0" max="100" value="28">
+      </section>
+
+      <section class="control-block range-control">
+        <div class="label-row">
+          <label for="shapeSize">SHAPE SIZE</label>
+          <output id="shapeSizeVal">100%</output>
+        </div>
+        <input id="shapeSize" type="range" min="20" max="160" value="100">
+        <div class="size-hint">Smaller = more, smaller bubbles / shapes</div>
       </section>
 
       <section class="control-block range-control">

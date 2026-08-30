@@ -20,13 +20,28 @@ Then open:
 ## Features
 - 1–8 posters
 - Retro + Bubble
-- Watercolor Bubble
+- Watercolor Bubbles
+- Watercolor Blobs
+- Watercolor Fluid
+- Shapes Watercolor
+- Organic Shapes Watercolor
+- Circles Watercolor
+- Splashes Watercolor
+- Washes Watercolor
+- Marbling Watercolor
+- Swirls Watercolor
+- Waves Watercolor
+- Dots Watercolor
+- Confetti Watercolor
+- Galaxy Watercolor
+- Botanical Watercolor
+- Abstract Shapes
 - Soft Blobs
 - Mandala
 - Retro Waves
 - Minimal Circles
 - Geometric
-- Live controls for density, frequency, thickness, amplitude, phase and chaos
+- Live controls for density, frequency, shape size, thickness, amplitude, phase and chaos
 - Seeded generation for repeatable designs
 - Portrait / square / landscape formats
 - Standard / Large / XL SVG output
@@ -41,3 +56,12 @@ Then open:
 Add more generators as functions in `app.js` and add an option in the `#designMode` select.
 
 Important: this is an original implementation based on the visual behavior you described/supplied, not a copy of proprietary source code from another website.
+
+
+## Combined Illustrator artboard
+
+**Download All as One SVG** creates a single SVG file containing every generated poster/design on one artboard. Each poster is placed in its own SVG `<g>` group, so Illustrator can open the single file while keeping the shapes editable.
+
+The artboard column count and gap can be changed from the sidebar.
+
+Backgrounds are now automatically built as vivid multi-stop gradients from the selected background color and the active design palette, with subtle glow overlays.

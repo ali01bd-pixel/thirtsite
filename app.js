@@ -10,6 +10,7 @@
     designMode: "retroBubble",
     density: 10,
     frequency: 28,
+    shapeSize: 100,
     thickness: 2,
     amplitude: 135,
     phase: 45,
@@ -63,6 +64,54 @@
     return `rgba(${(v>>16)&255},${(v>>8)&255},${v&255},${a})`;
   }
 
+  function shapeFactor(){
+    // 100% = default. Lower values make all generated forms smaller.
+    return clamp(Number(state.shapeSize || 100) / 100, 0.2, 1.6);
+  }
+
+  function scaledR(base){
+    return base * shapeFactor();
+  }
+
+  function watercolorGradient(id, color, rnd, strength=1){
+    const x1 = (18 + rnd()*28).toFixed(1);
+    const y1 = (12 + rnd()*25).toFixed(1);
+    const x2 = (75 + rnd()*22).toFixed(1);
+    const y2 = (78 + rnd()*18).toFixed(1);
+    return `<radialGradient id="${id}" cx="${x1}%" cy="${y1}%" r="90%" fx="${x2}%" fy="${y2}%">
+      <stop offset="0%" stop-color="${color}" stop-opacity="${(.82*strength).toFixed(2)}"/>
+      <stop offset="52%" stop-color="${color}" stop-opacity="${(.53*strength).toFixed(2)}"/>
+      <stop offset="82%" stop-color="${color}" stop-opacity="${(.25*strength).toFixed(2)}"/>
+      <stop offset="100%" stop-color="${color}" stop-opacity="0"/>
+    </radialGradient>`;
+  }
+
+  function irregularEllipse(cx,cy,rx,ry,fill,opacity,rnd,seed){
+    const pts = clamp(14 + Math.round(state.chaos/6), 14, 30);
+    const rng = mulberry32(seed);
+    let d = "";
+    for(let i=0;i<pts;i++){
+      const a = (Math.PI*2*i)/pts;
+      const jitter = 1 + (rng()-.5)*(.16 + state.chaos/420);
+      const x = cx + Math.cos(a)*rx*jitter;
+      const y = cy + Math.sin(a)*ry*jitter;
+      d += `${i===0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)} `;
+    }
+    d += "Z";
+    return `<path d="${d}" fill="${fill}" fill-opacity="${opacity}"/>`;
+  }
+
+  function paperTexture(id){
+    return `<filter id="${id}" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency=".014" numOctaves="3" seed="${id.length*17}" result="noise"/>
+      <feColorMatrix in="noise" type="saturate" values="0" result="mono"/>
+      <feComponentTransfer>
+        <feFuncA type="table" tableValues="0 .11"/>
+      </feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="mono" mode="multiply"/>
+    </filter>`;
+  }
+
   function makeBlob(cx,cy,r,fill,opacity,stroke="",sw=0,seed=1){
     const rnd = mulberry32(seed);
     const points = clamp(Math.round(12 + state.chaos/8), 12, 26);
@@ -87,7 +136,7 @@
   function modeRetroBubble(w,h,colors,rnd){
     const out = [];
     const count = state.density;
-    const baseR = Math.min(w,h) * (0.11 + state.amplitude/1800);
+    const baseR = Math.min(w,h) * (0.11 + state.amplitude/1800) * shapeFactor();
     for(let i=0;i<count;i++){
       const edge = i%3===0;
       const cx = edge ? rnd()*w*1.25-w*.12 : rnd()*w;
@@ -109,16 +158,275 @@
     const out=[];
     const count=state.density+3;
     for(let i=0;i<count;i++){
-      const cx=rnd()*w, cy=rnd()*h, r=Math.min(w,h)*(0.09+rnd()*0.17);
-      const gradId=`wg${i}`;
-      out.push(`<defs><radialGradient id="${gradId}"><stop offset="0%" stop-color="${colors[i%colors.length]}" stop-opacity=".88"/><stop offset="65%" stop-color="${colors[i%colors.length]}" stop-opacity=".62"/><stop offset="100%" stop-color="${colors[i%colors.length]}" stop-opacity=".2"/></radialGradient></defs>`);
+      const cx=rnd()*w, cy=rnd()*h;
+      const r=scaledR(Math.min(w,h)*(0.075+rnd()*0.15));
+      const gradId=`wg${i}_${Math.abs(Math.floor(rnd()*1e8))}`;
+      out.push(`<defs>${watercolorGradient(gradId,colors[i%colors.length],rnd)}</defs>`);
       out.push(makeBlob(cx,cy,r,`url(#${gradId})`,1,state.strokeColor,state.thickness,Math.floor(rnd()*1e9)));
-      const washCount=3+Math.floor(state.chaos/30);
+      const washCount=2+Math.floor(state.frequency/28);
       for(let j=1;j<washCount;j++){
-        out.push(`<circle cx="${(cx+(rnd()-.5)*r*.22).toFixed(1)}" cy="${(cy+(rnd()-.5)*r*.22).toFixed(1)}" r="${(r*(1+j*.055)).toFixed(1)}" fill="none" stroke="${state.strokeColor}" stroke-opacity="${aClamp(state.strokeOpacity*.4)}" stroke-width="${Math.max(1,state.thickness*.7)}"/>`);
+        out.push(`<circle cx="${(cx+(rnd()-.5)*r*.18).toFixed(1)}" cy="${(cy+(rnd()-.5)*r*.18).toFixed(1)}"
+          r="${(r*(1+j*.055)).toFixed(1)}" fill="none" stroke="${state.strokeColor}"
+          stroke-opacity="${aClamp(state.strokeOpacity*.32)}" stroke-width="${Math.max(1,state.thickness*.65)}"/>`);
       }
     }
     return out.join("");
+  }
+
+  function modeWatercolorBlobs(w,h,colors,rnd){
+    let out = `<defs>${paperTexture("blobPaper")}</defs><g filter="url(#blobPaper)">`;
+    for(let i=0;i<state.density+1;i++){
+      const cx=rnd()*w, cy=rnd()*h;
+      const rx=scaledR(Math.min(w,h)*(.06+rnd()*.12));
+      const ry=rx*(.62+rnd()*.72);
+      const c=colors[i%colors.length];
+      out += irregularEllipse(cx,cy,rx,ry,c,.72+.16*rnd(),rnd,Math.floor(rnd()*1e9));
+      if(state.thickness){
+        out += `<ellipse cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" rx="${rx.toFixed(1)}" ry="${ry.toFixed(1)}"
+          fill="none" stroke="${state.strokeColor}" stroke-opacity="${aClamp(state.strokeOpacity*.55)}" stroke-width="${state.thickness}"/>`;
+      }
+    }
+    return out+"</g>";
+  }
+
+  function modeWatercolorFluid(w,h,colors,rnd){
+    let out="";
+    const bands=Math.max(3,Math.round(state.density*.65));
+    const amp=scaledR(Math.min(w,h)*(.05+state.amplitude/3000));
+    for(let i=0;i<bands;i++){
+      const y0=(i/(bands-1))*h;
+      let d=`M 0 ${y0.toFixed(1)}`;
+      const steps=30;
+      for(let s=1;s<=steps;s++){
+        const x=w*s/steps;
+        const t=s/steps*Math.PI*2*(.7+state.frequency/34)+state.phase*Math.PI/180+i*.55;
+        const y=y0+Math.sin(t)*(amp*(.35+state.frequency/90))+Math.cos(t*.53+i)*amp*.28;
+        d+=` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+      }
+      d+=` L ${w} ${h} L 0 ${h} Z`;
+      out+=`<path d="${d}" fill="${colors[i%colors.length]}" fill-opacity="${(.20+.055*(i%4)).toFixed(2)}"/>`;
+    }
+    for(let i=0;i<Math.round(state.density*.7);i++){
+      const cx=rnd()*w,cy=rnd()*h,r=scaledR(Math.min(w,h)*(.03+.06*rnd()));
+      out+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="${colors[i%colors.length]}" fill-opacity=".13"/>`;
+    }
+    return out;
+  }
+
+  function modeShapesWatercolor(w,h,colors,rnd){
+    let out=`<defs>${paperTexture("shapesPaper")}</defs><g filter="url(#shapesPaper)">`;
+    const n=state.density+2;
+    for(let i=0;i<n;i++){
+      const cx=rnd()*w,cy=rnd()*h,size=scaledR(Math.min(w,h)*(.07+.12*rnd()));
+      const c=colors[i%colors.length];
+      const type=i%3;
+      if(type===0){
+        out+=makeBlob(cx,cy,size,c,.58,state.strokeColor,state.thickness,Math.floor(rnd()*1e9));
+      }else if(type===1){
+        const rot=Math.floor(rnd()*360);
+        out+=`<rect x="${(cx-size).toFixed(1)}" y="${(cy-size*.7).toFixed(1)}" width="${(size*2).toFixed(1)}" height="${(size*1.4).toFixed(1)}"
+          rx="${(size*.18).toFixed(1)}" transform="rotate(${rot} ${cx.toFixed(1)} ${cy.toFixed(1)})"
+          fill="${c}" fill-opacity=".53" stroke="${state.strokeColor}" stroke-opacity="${aClamp(state.strokeOpacity*.7)}" stroke-width="${state.thickness}"/>`;
+      }else{
+        out+=`<polygon points="${cx.toFixed(1)},${(cy-size).toFixed(1)} ${(cx+size).toFixed(1)},${(cy+size*.72).toFixed(1)} ${(cx-size).toFixed(1)},${(cy+size*.72).toFixed(1)}"
+          fill="${c}" fill-opacity=".5" stroke="${state.strokeColor}" stroke-opacity="${aClamp(state.strokeOpacity*.7)}" stroke-width="${state.thickness}"/>`;
+      }
+    }
+    return out+"</g>";
+  }
+
+  function modeOrganicShapesWatercolor(w,h,colors,rnd){
+    let out="";
+    for(let i=0;i<state.density+3;i++){
+      const cx=rnd()*w,cy=rnd()*h,r=scaledR(Math.min(w,h)*(.06+.13*rnd()));
+      const c=colors[i%colors.length];
+      out+=makeBlob(cx,cy,r,c,.52,state.strokeColor,state.thickness,Math.floor(rnd()*1e9));
+      out+=makeBlob(cx+(rnd()-.5)*r*.22,cy+(rnd()-.5)*r*.22,r*.82,c,.20,"",0,Math.floor(rnd()*1e9));
+    }
+    return out;
+  }
+
+  function modeCirclesWatercolor(w,h,colors,rnd){
+    let out=`<defs>`;
+    for(let i=0;i<colors.length;i++) out+=watercolorGradient(`circleG${i}`,colors[i],rnd,.96);
+    out+=`</defs>`;
+    for(let i=0;i<state.density+5;i++){
+      const cx=rnd()*w,cy=rnd()*h,r=scaledR(Math.min(w,h)*(.035+.08*rnd()));
+      const gid=`circleG${i%colors.length}`;
+      out+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#${gid})"/>`;
+      out+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${(r*1.04).toFixed(1)}" fill="none"
+        stroke="${state.strokeColor}" stroke-opacity="${aClamp(state.strokeOpacity*.35)}" stroke-width="${Math.max(1,state.thickness*.65)}"/>`;
+    }
+    return out;
+  }
+
+  function modeSplashesWatercolor(w,h,colors,rnd){
+    let out="";
+    const splashes=Math.max(4,Math.round(state.density*.65));
+    for(let i=0;i<splashes;i++){
+      const cx=rnd()*w,cy=rnd()*h,mainR=scaledR(Math.min(w,h)*(.025+.065*rnd())),c=colors[i%colors.length];
+      out+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${mainR.toFixed(1)}" fill="${c}" fill-opacity=".64"/>`;
+      const dots=5+Math.floor(state.chaos/8);
+      for(let j=0;j<dots;j++){
+        const a=rnd()*Math.PI*2,dist=mainR*(1.5+4*rnd()),rr=Math.max(2,mainR*(.08+.20*rnd()));
+        out+=`<circle cx="${(cx+Math.cos(a)*dist).toFixed(1)}" cy="${(cy+Math.sin(a)*dist).toFixed(1)}" r="${rr.toFixed(1)}" fill="${c}" fill-opacity="${(.28+.4*rnd()).toFixed(2)}"/>`;
+      }
+    }
+    return out;
+  }
+
+  function modeWashesWatercolor(w,h,colors,rnd){
+    let out="";
+    const washes=4+Math.floor(state.density/3);
+    for(let i=0;i<washes;i++){
+      const c=colors[i%colors.length];
+      const y=(i/(washes-1))*h + (rnd()-.5)*h*.15;
+      const rx=w*(.30+.28*rnd()), ry=scaledR(Math.min(w,h)*(.10+.08*rnd()));
+      out+=irregularEllipse(rnd()*w,y,rx,ry,c,.10+.08*rnd(),rnd,Math.floor(rnd()*1e9));
+    }
+    return out;
+  }
+
+  function modeMarblingWatercolor(w,h,colors,rnd){
+    let out="";
+    const paths=state.density+8;
+    for(let i=0;i<paths;i++){
+      const y=(i/(paths-1))*h;
+      let d=`M 0 ${(y+(rnd()-.5)*h*.18).toFixed(1)}`;
+      for(let s=1;s<=36;s++){
+        const x=w*s/36, t=s/36*Math.PI*2*(.9+state.frequency/30)+i*.21+state.phase*Math.PI/180;
+        const yy=y+Math.sin(t)*scaledR(Math.min(w,h)*(.025+state.amplitude/4200))+Math.sin(t*2.3+i)*scaledR(Math.min(w,h)*.018);
+        d+=` C ${(x-w/36).toFixed(1)} ${yy.toFixed(1)}, ${x.toFixed(1)} ${(yy+Math.sin(t+.9)*12).toFixed(1)}, ${x.toFixed(1)} ${yy.toFixed(1)}`;
+      }
+      out+=`<path d="${d}" fill="none" stroke="${colors[i%colors.length]}" stroke-opacity=".42" stroke-width="${Math.max(2,state.thickness*2.4)}"/>`;
+    }
+    return out;
+  }
+
+  function modeSwirlsWatercolor(w,h,colors,rnd){
+    let out="";
+    const count=Math.max(3,Math.round(state.density*.45));
+    for(let i=0;i<count;i++){
+      const cx=rnd()*w,cy=rnd()*h,maxR=scaledR(Math.min(w,h)*(.10+.18*rnd()));
+      const turns=3+Math.floor(state.frequency/25);
+      let d="";
+      const steps=80;
+      for(let s=0;s<=steps;s++){
+        const t=s/steps*Math.PI*2*turns;
+        const r=maxR*(1-s/steps);
+        const x=cx+Math.cos(t+state.phase*Math.PI/180)*r;
+        const y=cy+Math.sin(t+state.phase*Math.PI/180)*r;
+        d+=`${s===0?"M":"L"} ${x.toFixed(1)} ${y.toFixed(1)} `;
+      }
+      out+=`<path d="${d}" fill="none" stroke="${colors[i%colors.length]}" stroke-opacity=".48" stroke-width="${Math.max(2,state.thickness*1.35)}" stroke-linecap="round"/>`;
+    }
+    return out;
+  }
+
+  function modeWavesWatercolor(w,h,colors,rnd){
+    let out="";
+    const layers=Math.max(4,Math.round(state.density*.72));
+    for(let i=0;i<layers;i++){
+      const y0=(i/(layers-1))*h;
+      let d=`M 0 ${y0.toFixed(1)}`;
+      for(let x=0;x<=w;x+=Math.max(24,w/36)){
+        const t=x/w*Math.PI*2*(.7+state.frequency/28)+i*.38+state.phase*Math.PI/180;
+        const y=y0+Math.sin(t)*scaledR(Math.min(w,h)*(.025+state.amplitude/4200));
+        d+=` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+      }
+      out+=`<path d="${d}" fill="none" stroke="${colors[i%colors.length]}" stroke-opacity=".46" stroke-width="${Math.max(2,state.thickness*1.7)}" stroke-linecap="round"/>`;
+    }
+    return out;
+  }
+
+  function modeDotsWatercolor(w,h,colors,rnd){
+    let out="";
+    const count=state.density*4;
+    for(let i=0;i<count;i++){
+      const x=rnd()*w,y=rnd()*h,r=scaledR(Math.min(w,h)*(.008+.026*rnd()));
+      out+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${colors[i%colors.length]}" fill-opacity="${(.22+.58*rnd()).toFixed(2)}"/>`;
+      if(state.chaos>35 && rnd()>.72){
+        out+=`<circle cx="${(x+rnd()*r*2).toFixed(1)}" cy="${(y+rnd()*r*2).toFixed(1)}" r="${(r*.35).toFixed(1)}" fill="${colors[(i+1)%colors.length]}" fill-opacity=".18"/>`;
+      }
+    }
+    return out;
+  }
+
+  function modeConfettiWatercolor(w,h,colors,rnd){
+    let out="";
+    const count=state.density*3;
+    for(let i=0;i<count;i++){
+      const x=rnd()*w,y=rnd()*h,s=scaledR(Math.min(w,h)*(.008+.025*rnd()));
+      const rot=rnd()*360,c=colors[i%colors.length];
+      if(i%2){
+        out+=`<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="${(s*1.8).toFixed(1)}" ry="${(s*.55).toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" fill="${c}" fill-opacity=".48"/>`;
+      }else{
+        out+=`<rect x="${(x-s).toFixed(1)}" y="${(y-s*.55).toFixed(1)}" width="${(s*2).toFixed(1)}" height="${s.toFixed(1)}" transform="rotate(${rot.toFixed(1)} ${x.toFixed(1)} ${y.toFixed(1)})" rx="${(s*.25).toFixed(1)}" fill="${c}" fill-opacity=".48"/>`;
+      }
+    }
+    return out;
+  }
+
+  function modeGalaxyWatercolor(w,h,colors,rnd){
+    let out="";
+    const count=state.density+2;
+    for(let i=0;i<count;i++){
+      const cx=rnd()*w,cy=rnd()*h,r=scaledR(Math.min(w,h)*(.07+.15*rnd()));
+      const gid=`gal${i}`;
+      out+=`<defs>${watercolorGradient(gid,colors[i%colors.length],rnd,.95)}</defs>`;
+      out+=`<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="url(#${gid})"/>`;
+    }
+    const stars=state.density*6;
+    for(let i=0;i<stars;i++){
+      const x=rnd()*w,y=rnd()*h,r=scaledR(Math.min(w,h)*(.002+.006*rnd()));
+      out+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(1)}" fill="${state.strokeColor}" fill-opacity="${(.20+.7*rnd()).toFixed(2)}"/>`;
+    }
+    return out;
+  }
+
+  function modeBotanicalWatercolor(w,h,colors,rnd){
+    let out="";
+    const groups=Math.max(2,Math.round(state.density*.38));
+    for(let g=0;g<groups;g++){
+      const x0=rnd()*w,y0=rnd()*h,dir=rnd()*Math.PI*2;
+      const len=scaledR(Math.min(w,h)*(.16+.18*rnd()));
+      let d=`M ${x0.toFixed(1)} ${y0.toFixed(1)}`;
+      for(let s=1;s<=18;s++){
+        const t=s/18;
+        const x=x0+Math.cos(dir)*len*t;
+        const y=y0+Math.sin(dir)*len*t;
+        d+=` L ${x.toFixed(1)} ${y.toFixed(1)}`;
+        const leafR=scaledR(Math.min(w,h)*(.015+.025*rnd()));
+        const side=(s%2===0?1:-1);
+        const lx=x+Math.cos(dir+side*.9)*leafR*2;
+        const ly=y+Math.sin(dir+side*.9)*leafR*2;
+        out+=`<ellipse cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" rx="${(leafR*1.5).toFixed(1)}" ry="${leafR.toFixed(1)}"
+          transform="rotate(${(dir*180/Math.PI+side*35).toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})"
+          fill="${colors[g%colors.length]}" fill-opacity=".36"/>`;
+      }
+      out+=`<path d="${d}" fill="none" stroke="${colors[(g+1)%colors.length]}" stroke-opacity=".42" stroke-width="${Math.max(2,state.thickness*1.35)}" stroke-linecap="round"/>`;
+    }
+    return out;
+  }
+
+  function modeAbstractShapes(w,h,colors,rnd){
+    let out="";
+    for(let i=0;i<state.density+3;i++){
+      const x=rnd()*w,y=rnd()*h,s=scaledR(Math.min(w,h)*(.06+.12*rnd())),c=colors[i%colors.length];
+      const type=i%4;
+      if(type===0){
+        out+=makeBlob(x,y,s,c,.54,state.strokeColor,state.thickness,Math.floor(rnd()*1e9));
+      }else if(type===1){
+        out+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${s.toFixed(1)}" fill="${c}" fill-opacity=".48"/>`;
+      }else if(type===2){
+        const points=`${x},${y-s} ${x+s*.86},${y+s*.65} ${x-s*.86},${y+s*.65}`;
+        out+=`<polygon points="${points}" fill="${c}" fill-opacity=".5"/>`;
+      }else{
+        out+=`<path d="M ${x-s} ${y} Q ${x} ${y-s*1.7} ${x+s} ${y} Q ${x} ${y+s*1.7} ${x-s} ${y} Z"
+          fill="${c}" fill-opacity=".43"/>`;
+      }
+    }
+    return out;
   }
 
   function modeSoftBlob(w,h,colors,rnd){
@@ -171,7 +479,7 @@
   function modeMinimal(w,h,colors,rnd){
     let out="";
     for(let i=0;i<state.density;i++){
-      const cx=rnd()*w, cy=rnd()*h, r=Math.min(w,h)*(.06+rnd()*.16);
+      const cx=rnd()*w, cy=rnd()*h, r=scaledR(Math.min(w,h)*(.06+rnd()*.16));
       out += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${r.toFixed(1)}" fill="none" stroke="${colors[i%colors.length]}" stroke-width="${Math.max(1,state.thickness)}" stroke-opacity=".9"/>`;
     }
     return out;
@@ -197,6 +505,21 @@
     let shapes="";
     switch(state.designMode){
       case "watercolorBubble": shapes=modeWatercolor(w,h,palette,rnd); break;
+      case "watercolorBlobs": shapes=modeWatercolorBlobs(w,h,palette,rnd); break;
+      case "watercolorFluid": shapes=modeWatercolorFluid(w,h,palette,rnd); break;
+      case "shapesWatercolor": shapes=modeShapesWatercolor(w,h,palette,rnd); break;
+      case "organicShapesWatercolor": shapes=modeOrganicShapesWatercolor(w,h,palette,rnd); break;
+      case "circlesWatercolor": shapes=modeCirclesWatercolor(w,h,palette,rnd); break;
+      case "splashesWatercolor": shapes=modeSplashesWatercolor(w,h,palette,rnd); break;
+      case "washesWatercolor": shapes=modeWashesWatercolor(w,h,palette,rnd); break;
+      case "marblingWatercolor": shapes=modeMarblingWatercolor(w,h,palette,rnd); break;
+      case "swirlsWatercolor": shapes=modeSwirlsWatercolor(w,h,palette,rnd); break;
+      case "wavesWatercolor": shapes=modeWavesWatercolor(w,h,palette,rnd); break;
+      case "dotsWatercolor": shapes=modeDotsWatercolor(w,h,palette,rnd); break;
+      case "confettiWatercolor": shapes=modeConfettiWatercolor(w,h,palette,rnd); break;
+      case "galaxyWatercolor": shapes=modeGalaxyWatercolor(w,h,palette,rnd); break;
+      case "botanicalWatercolor": shapes=modeBotanicalWatercolor(w,h,palette,rnd); break;
+      case "abstractShapes": shapes=modeAbstractShapes(w,h,palette,rnd); break;
       case "softBlob": shapes=modeSoftBlob(w,h,palette,rnd); break;
       case "mandala": shapes=modeMandala(w,h,palette,rnd); break;
       case "retroWave": shapes=modeRetroWave(w,h,palette,rnd); break;
@@ -260,6 +583,7 @@
     const map={
       density:["densityVal",v=>v],
       frequency:["frequencyVal",v=>v+"%"],
+      shapeSize:["shapeSizeVal",v=>v+"%"],
       thickness:["thicknessVal",v=>v+"PX"],
       amplitude:["amplitudeVal",v=>v+"%"],
       phase:["phaseVal",v=>v+"°"],
@@ -269,7 +593,7 @@
   }
 
   function readControls(){
-    for(const key of ["posterCount","designMode","density","frequency","thickness","amplitude","phase","chaos","format","quality","bgColor","strokeColor","strokeOpacity"]){
+    for(const key of ["posterCount","designMode","density","frequency","shapeSize","thickness","amplitude","phase","chaos","format","quality","bgColor","strokeColor","strokeOpacity"]){
       const el=$(key);
       state[key]=el.type==="range"||el.tagName==="SELECT" ? (el.id==="posterCount"||["density","frequency","thickness","amplitude","phase","chaos","strokeOpacity"].includes(key)?Number(el.value):el.value) : el.value;
     }
@@ -277,7 +601,7 @@
   }
 
   function bind(){
-    ["posterCount","designMode","density","frequency","thickness","amplitude","phase","chaos","seed","format","quality","bgColor","strokeColor","strokeOpacity"].forEach(id=>{
+    ["posterCount","designMode","density","frequency","shapeSize","thickness","amplitude","phase","chaos","seed","format","quality","bgColor","strokeColor","strokeOpacity"].forEach(id=>{
       const el=$(id);
       el.addEventListener("input",()=>{
         readControls();updateOutputs();

@@ -3,218 +3,155 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ALI STUDIO — SVG Design Generator</title>
-  <meta name="description" content="A client-side SVG abstract poster generator with editable design controls.">
+  <title>ALI STUDIO — Modern Blue Poster Generator</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <span class="brand-mark">◆</span>
-      <span class="brand-name">ALI STUDIO</span>
-      <span class="brand-sub">Master Poster Generator</span>
-    </div>
-    <div class="alert">
-      <strong>⚠ ADOBE STOCK / MICROSTOCK ALERT</strong>
-      <span>Customise designs before uploading / Similar issue এড়াতে ডিজাইন কাস্টমাইজ করে নিন</span>
-    </div>
-    <div class="account">
-      <div class="avatar">M</div>
-      <span class="account-name">Mohammad</span>
-      <button class="upgrade">✨ UPGRADE TO PRO</button>
-    </div>
-  </header>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">◆</span>
+    <span class="brand-name">ALI STUDIO</span>
+    <span class="brand-sub">Master Poster Generator</span>
+  </div>
+  <div class="alert">
+    <strong>MODERN POSTER GENERATOR</strong>
+    <span>Blue gradient editorial collection • fully editable SVG</span>
+  </div>
+  <div class="account">
+    <div class="avatar">M</div>
+    <span class="account-name">Mohammad</span>
+    <button class="upgrade">✨ UPGRADE TO PRO</button>
+  </div>
+</header>
 
-  <main class="app-shell">
-    <aside class="sidebar">
-      <section class="control-block">
-        <label for="posterCount">NUMBER OF POSTERS</label>
-        <select id="posterCount">
-          <option value="1">1 Poster</option>
-          <option value="2">2 Posters</option>
-          <option value="4" selected>4 Posters</option>
-          <option value="6">6 Posters</option>
-          <option value="8">8 Posters</option>
+<main class="app-shell">
+  <aside class="sidebar">
+    <section class="control-block">
+      <label for="posterCount">NUMBER OF POSTERS</label>
+      <select id="posterCount">
+        <option value="1">1 Poster</option>
+        <option value="2">2 Posters</option>
+        <option value="4">4 Posters</option>
+        <option value="5" selected>5 Posters</option>
+        <option value="6">6 Posters</option>
+        <option value="8">8 Posters</option>
+      </select>
+    </section>
+
+    <section class="settings-title">⚙ SETTINGS</section>
+
+    <section class="control-block">
+      <label for="designMode">DESIGN MODE</label>
+      <select id="designMode">
+        <option value="blueModern" selected>Blue Gradient Modern</option>
+      </select>
+      <div class="mode-note">Creates the visual family from your latest reference: blue gradients, rounded bars, bubble grids, oversized circles, vertical fades and organic petals.</div>
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="shapeSize">SHAPE SIZE</label><output id="shapeSizeVal">100%</output></div>
+      <input id="shapeSize" type="range" min="35" max="150" value="100">
+      <div class="size-hint">Smaller values create smaller, tighter forms.</div>
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="density">BASE DENSITY</label><output id="densityVal">8</output></div>
+      <input id="density" type="range" min="3" max="18" value="8">
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="gradientSoftness">GRADIENT SOFTNESS</label><output id="gradientSoftnessVal">70%</output></div>
+      <input id="gradientSoftness" type="range" min="20" max="100" value="70">
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="spacing">SPACING</label><output id="spacingVal">24%</output></div>
+      <input id="spacing" type="range" min="5" max="70" value="24">
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="edgeFade">EDGE FADE</label><output id="edgeFadeVal">32%</output></div>
+      <input id="edgeFade" type="range" min="0" max="80" value="32">
+    </section>
+
+    <section class="control-block range-control">
+      <div class="label-row"><label for="textAmount">TEXT DETAIL</label><output id="textAmountVal">60%</output></div>
+      <input id="textAmount" type="range" min="0" max="100" value="60">
+    </section>
+
+    <section class="control-block">
+      <div class="label-row"><label for="seed">SEED</label><span class="tiny-note">same seed = repeatable set</span></div>
+      <input id="seed" class="text-input" type="number" value="260831" min="1" step="1">
+    </section>
+
+    <section class="control-block two-col">
+      <div>
+        <label for="format">FORMAT</label>
+        <select id="format">
+          <option value="portrait" selected>Portrait</option>
+          <option value="square">Square</option>
+          <option value="landscape">Landscape</option>
         </select>
-      </section>
-
-      <section class="control-block two-col">
-        <div>
-          <label for="artboardColumns">ARTBOARD COLUMNS</label>
-          <select id="artboardColumns">
-            <option value="1">1 Column</option>
-            <option value="2">2 Columns</option>
-            <option value="3">3 Columns</option>
-            <option value="4" selected>4 Columns</option>
-          </select>
-        </div>
-        <div>
-          <label for="artboardGap">ARTBOARD GAP</label>
-          <select id="artboardGap">
-            <option value="12">12 px</option>
-            <option value="24" selected>24 px</option>
-            <option value="36">36 px</option>
-            <option value="48">48 px</option>
-          </select>
-        </div>
-      </section>
-
-      <section class="settings-title">⚙ SETTINGS</section>
-
-      <section class="control-block">
-        <label for="designMode">DESIGN MODE</label>
-        <select id="designMode">
-          <option value="retroBubble" selected>Retro + Bubble</option>
-          <option value="watercolorBubble">Watercolor Bubbles</option>
-          <option value="watercolorBlobs">Watercolor Blobs</option>
-          <option value="watercolorFluid">Watercolor Fluid</option>
-          <option value="shapesWatercolor">Shapes Watercolor</option>
-          <option value="organicShapesWatercolor">Organic Shapes Watercolor</option>
-          <option value="circlesWatercolor">Circles Watercolor</option>
-          <option value="splashesWatercolor">Splashes Watercolor</option>
-          <option value="washesWatercolor">Washes Watercolor</option>
-          <option value="marblingWatercolor">Marbling Watercolor</option>
-          <option value="swirlsWatercolor">Swirls Watercolor</option>
-          <option value="wavesWatercolor">Waves Watercolor</option>
-          <option value="dotsWatercolor">Dots Watercolor</option>
-          <option value="confettiWatercolor">Confetti Watercolor</option>
-          <option value="galaxyWatercolor">Galaxy Watercolor</option>
-          <option value="botanicalWatercolor">Botanical Watercolor</option>
-          <option value="abstractShapes">Abstract Shapes</option>
-          <option value="softBlob">Soft Blobs</option>
-          <option value="mandala">Mandala</option>
-          <option value="retroWave">Retro Waves</option>
-          <option value="minimalCircles">Minimal Circles</option>
-          <option value="geometric">Geometric</option>
+      </div>
+      <div>
+        <label for="quality">QUALITY</label>
+        <select id="quality">
+          <option value="standard">Standard</option>
+          <option value="large" selected>Large</option>
+          <option value="xl">XL</option>
         </select>
-      </section>
-
-      <div class="divider"></div>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="density">BASE DENSITY</label><output id="densityVal">10</output></div>
-        <input id="density" type="range" min="2" max="24" value="10">
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="frequency">WAVE FREQUENCY</label><output id="frequencyVal">28%</output></div>
-        <input id="frequency" type="range" min="0" max="100" value="28">
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row">
-          <label for="shapeSize">SHAPE SIZE</label>
-          <output id="shapeSizeVal">100%</output>
-        </div>
-        <input id="shapeSize" type="range" min="20" max="160" value="100">
-        <div class="size-hint">Smaller = more, smaller bubbles / shapes</div>
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="thickness">BASE THICKNESS</label><output id="thicknessVal">2PX</output></div>
-        <input id="thickness" type="range" min="0" max="12" value="2">
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="amplitude">AMPLITUDE</label><output id="amplitudeVal">135%</output></div>
-        <input id="amplitude" type="range" min="20" max="220" value="135">
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="phase">PHASE SHIFT</label><output id="phaseVal">45°</output></div>
-        <input id="phase" type="range" min="0" max="360" value="45">
-      </section>
-
-      <section class="control-block range-control">
-        <div class="label-row"><label for="chaos">CHAOS</label><output id="chaosVal">45%</output></div>
-        <input id="chaos" type="range" min="0" max="100" value="45">
-      </section>
-
-      <section class="control-block">
-        <div class="label-row"><label for="seed">SEED</label><span class="tiny-note">same seed = same layout</span></div>
-        <input id="seed" class="text-input" type="number" value="260830" min="1" step="1">
-      </section>
-
-      <section class="control-block two-col">
-        <div>
-          <label for="format">FORMAT</label>
-          <select id="format">
-            <option value="portrait" selected>Portrait</option>
-            <option value="square">Square</option>
-            <option value="landscape">Landscape</option>
-          </select>
-        </div>
-        <div>
-          <label for="quality">QUALITY</label>
-          <select id="quality">
-            <option value="standard">Standard</option>
-            <option value="large" selected>Large</option>
-            <option value="xl">XL</option>
-          </select>
-        </div>
-      </section>
-
-      <section class="control-block color-row">
-        <div>
-          <label for="bgColor">BACKGROUND</label>
-          <input id="bgColor" type="color" value="#3b0065">
-        </div>
-        <div>
-          <label for="strokeColor">STROKE</label>
-          <input id="strokeColor" type="color" value="#f8f0ff">
-        </div>
-      </section>
-
-      <section class="control-block">
-        <div class="label-row"><label for="strokeOpacity">STROKE OPACITY</label><output id="strokeOpacityVal">38%</output></div>
-        <input id="strokeOpacity" type="range" min="0" max="100" value="38">
-      </section>
-
-      <div class="button-grid">
-        <button id="randomize" class="btn secondary">🎲 Randomize</button>
-        <button id="regenerate" class="btn primary">↻ Generate</button>
-      </div>
-
-      <div class="download-stack">
-        <button id="downloadAll" class="btn download">⇩ DOWNLOAD ALL SVG</button>
-        <button id="downloadJson" class="btn secondary">⚙ SAVE SETTINGS JSON</button>
-      </div>
-
-      <p class="privacy">100% client-side. SVGs are generated in your browser; nothing is uploaded to a server.</p>
-    </aside>
-
-    <section class="workspace">
-      <div class="workspace-head">
-        <div>
-          <h1>SVG DESIGN LAB</h1>
-          <p>Each poster is a real editable SVG.</p>
-        </div>
-        <div class="workspace-actions">
-          <button id="zoomOut" class="icon-btn">−</button>
-          <span id="zoomLabel">100%</span>
-          <button id="zoomIn" class="icon-btn">+</button>
-        </div>
-      </div>
-
-      <div id="canvasWrap" class="canvas-wrap">
-        <div id="posterGrid" class="poster-grid"></div>
       </div>
     </section>
-  </main>
 
-  <template id="posterTemplate">
-    <article class="poster-card">
-      <div class="poster-toolbar">
-        <span class="poster-number">POSTER 01</span>
-        <div>
-          <button class="mini-btn download-one" title="Download SVG">⇩</button>
-          <button class="mini-btn copy-one" title="Copy SVG">⧉</button>
-        </div>
+    <section class="control-block color-row">
+      <div><label for="darkColor">DARK BLUE</label><input id="darkColor" type="color" value="#080e33"></div>
+      <div><label for="lightColor">LIGHT BLUE</label><input id="lightColor" type="color" value="#9ac8f2"></div>
+    </section>
+
+    <div class="button-grid">
+      <button id="randomize" class="btn secondary">🎲 Randomize</button>
+      <button id="regenerate" class="btn primary">↻ Generate</button>
+    </div>
+
+    <div class="download-stack">
+      <button id="downloadAll" class="btn download">⇩ DOWNLOAD ALL AS ONE SVG</button>
+      <button id="downloadJson" class="btn secondary">⚙ SAVE SETTINGS JSON</button>
+    </div>
+
+    <p class="privacy">All artwork is generated in your browser. The exported SVG stays editable in Illustrator.</p>
+  </aside>
+
+  <section class="workspace">
+    <div class="workspace-head">
+      <div>
+        <h1>BLUE GRADIENT MODERN</h1>
+        <p>Five coordinated poster layouts inspired by the uploaded reference.</p>
       </div>
-      <div class="poster-frame"></div>
-    </article>
-  </template>
+      <div class="workspace-actions">
+        <button id="zoomOut" class="icon-btn">−</button>
+        <span id="zoomLabel">100%</span>
+        <button id="zoomIn" class="icon-btn">+</button>
+      </div>
+    </div>
+    <div class="canvas-wrap">
+      <div id="posterGrid" class="poster-grid"></div>
+    </div>
+  </section>
+</main>
 
-  <script src="app.js"></script>
+<template id="posterTemplate">
+  <article class="poster-card">
+    <div class="poster-toolbar">
+      <span class="poster-number">POSTER 01</span>
+      <div>
+        <button class="mini-btn download-one" title="Download SVG">⇩</button>
+        <button class="mini-btn copy-one" title="Copy SVG">⧉</button>
+      </div>
+    </div>
+    <div class="poster-frame"></div>
+  </article>
+</template>
+
+<script src="app.js"></script>
 </body>
 </html>
